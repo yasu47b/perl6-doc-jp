@@ -15,3 +15,52 @@ Perl 6でモジュールという言葉はmoduleキーワードで宣言され�
 Perl 6のモジュールの配布方法は以前のPerlと同じです - 配布用のプロジェクトディレクトリにはREADMEとLICENSEファイル、メインとなるモジュール格納用のlibディレクトリ、テストのためのtディレクトリ、またそれらに加えて実行可能ブログラムとスクリプト用のbinディレクトリが含まれることもあります。
 
 モジュールファイルにはたいてい.pm拡張子が、実行可能スクリプトには.pl拡張子がつきます。しかしながら、あなたがPerl 6のモジュールであるということを強調したいなら、モジュールファイルには.pm6、そして実行可能スクリプトには.p6の拡張子をつけることも出来ます。ただ、テストスクリプトに関しては今までどおり.t拡張子を使用してください。
+
+### ローディングと基本的なインポート
+
+#### need
+
+need はコンパイル時にcompilation unitをロードします。
+
+```
+  need MyModule;
+```
+
+モジュール内部で定義されている名前空間のパッケージが利用可能になります。
+
+```
+  # MyModule.pm
+  unit module MyModule;
+
+  class MyModule::Class { ... }
+```
+
+クラス MyModule::Class はMyModule.pmがロードされた時に定義されます。
+
+#### use
+
+use はコンパイル時にcompilation unitをロードしてインポートします。
+
+```
+  use MyModule;
+```
+
+これは次の例と等価です。
+
+```
+  need MyModule;
+  import MyModule;
+```
+
+#### require
+
+require は実行時にcompilation unitiをロードし、限定的なシンボルをインポートします。
+
+```
+sub load-mymodule {
+   say "loading MyModule";
+   require MyModule;
+}
+
+load-mymodule();
+```
