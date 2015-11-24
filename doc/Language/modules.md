@@ -64,3 +64,27 @@ sub load-mymodule {
 
 load-mymodule();
 ```
+
+間接的にcompilation unitを設定する場合は（以下のようにサブルーチン引数として）、compilation unit名は
+実行時の変数に格納されます。
+
+```
+  sub load-a-module($name){
+    require ::($name);
+  }
+
+  load-a-module('MyModule');
+```
+シンボルをインポートする場合は、コンパイル時に定義されてなければなりません。
+
+```
+  sub do-something {
+    require MyModule <&something>;
+    something() # &something will be defined here
+  }
+
+  do-something();
+  # &something will not be defined here
+```
+
+もし、&something がエクスポートされなかった場合は、モジュールのインポート処理は失敗します。
