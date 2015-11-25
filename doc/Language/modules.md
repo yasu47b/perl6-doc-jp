@@ -88,3 +88,56 @@ load-mymodule();
 ```
 
 もし、&something がエクスポートされなかった場合は、モジュールのインポート処理は失敗します。
+
+## エクスポートと選択的インポート
+
+### is export
+
+パッケージ、サブルーチン、変数、定数と列挙型は is export トレイトによってエクスポートされます。
+
+
+```
+    unit module MyModule;
+    our $var is export = 3;
+    sub foo is export { ... };
+    constant $FOO is export = "foobar";
+    enum FooBar is export <one two three>;
+
+    # Packages like classes can be exported too
+    class MyClass is export {};
+
+    # If a subpackage is in the namespace of the current package
+    # it doesn't need to be explicitly exported
+    class MyModule::MyClass {};
+```
+
+他のトレイトの使い方と同様に、"is export"をルーチンに適用する場合は引数リストの後に配置します。
+
+
+```
+  sub foo (Str $string) is export { ... }
+```
+
+エクスポート処理で、"is export"は名前付きのパラメータを受け取ることで、シンボルをグループ化できます。
+そして、インポートをする側では、使いたいものだけを選択してインポートが出来ます。
+その場合は、ALL, DEFAULT, MANDATORYの３つのタグが使用できます。
+
+```
+    # lib/MyModule.pm
+    unit module MyModule;
+    sub bag        is export             { ... }
+    sub pants      is export(:MANDATORY) { ... }
+    sub sunglasses is export(:day)       { ... }
+    sub torch      is export(:night)     { ... }
+    sub underpants is export(:ALL)       { ... }
+```
+
+```
+    # main.pl
+    use lib 'lib';
+    use MyModule;          #bag, pants
+    use MyModule :DEFAULT; #the same
+    use MyModule :day;     #pants, sunglasses
+    use MyModule :night;   #pants, torch
+    use MyModule :ALL;     #bag, pants, sunglasses, torch, underpants
+```
