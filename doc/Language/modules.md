@@ -141,3 +141,56 @@ load-mymodule();
     use MyModule :night;   #pants, torch
     use MyModule :ALL;     #bag, pants, sunglasses, torch, underpants
 ```
+
+### UNIT::EXPORT::*
+
+"is export"の内部では"EXPORT"の名前空間の"UNIT"パッケージスコープに
+シンボルを追加しています。例えば、"is export(:Foo)"は"UNIT::EXPORT::FOO"パッケージ
+が(UNIT::EXPORTパッケージに)追加されます。このようにPerl 6ではインポートする対象を
+決定しています。
+
+
+```
+    unit module MyModule;
+
+    sub foo is export { ... }
+    sub bar is export(:other) { ... }
+```
+
+上記のコードは以下と等価です。
+
+```
+    unit module MyModule;
+
+    my package EXPORT::DEFAULT {
+        our sub foo { ... }
+    }
+
+    my package EXPORT::other {
+        our sub bar { ... }
+    }
+```
+
+"is export"とは対照的に、"EXPORT"パッケージは動的にシンボルをエクスポートしたい場合に
+使用します。以下の様な例です。
+
+```
+    # lib/MyModule.pm
+    unit module MyModule;
+
+    my package EXPORT::DEFAULT {
+       for <zero one two three four>.kv -> $number,$name {
+          for <sqrt log> -> $func {
+             OUR::{'&' ~ $func ~ '-of-' ~ $name } := sub { $number."$func"() };
+          }
+       }
+    }
+
+```
+
+```
+    # main.pl
+    use MyModule;
+    say sqrt-of-four; #-> 2
+    say log-of-zero;  #-> -Inf
+```
