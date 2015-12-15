@@ -194,3 +194,72 @@ load-mymodule();
     say sqrt-of-four; #-> 2
     say log-of-zero;  #-> -Inf
 ```
+
+
+### EXPORT
+
+"EXPORT" を使用すると任意のシンボルをエクスポート出来ます。"EXPORT"はするシンボルの名前とそれ対応する
+値をもつMapを返します。シンボルの名前は対応する型がある場合はシジルが必須です。
+
+```
+    # lib/MyModule.pm
+
+    class MyModule::Class { ... }
+
+    sub EXPORT {
+        {
+         '$var'   => 'one',
+         '@array' => <one two three>,
+         '%hash'  => { one => 'two', three => 'four' },
+         '&doit'   => sub { ... },
+         'ShortName' => MyModule::Class
+        }
+    }
+```
+
+```
+    # main.pl
+    use lib 'lib';
+    use MyModule;
+    say $var;
+    say @array;
+    say %hash;
+    doit();
+    say ShortName.new; #-> MyModule::Class.new
+```
+
+"EXPORt"はパッケージ内では宣言できないことに注意してください。
+なぜなら、2015年9月時点でのrakudoは"EXPORT"をパッケージではなくcompunitとして
+処理するからです。
+
+"UNIT::EXPORT"パッケージが名前付きパラメータを"use"に渡すこととは対照的に、
+"EXPORT"サブルーチンは定位置パラメータを扱います。定位置パラメータを"use"に渡すと、
+そのパラメータは"EXPORT"に渡されます。定位置パラメータをモデュールに渡した場合は、
+もともとのシンボルはエクスポートされません。シンボルを定位置パラメータと一緒にインポートするには、
+":DEFAULT"を付与します。
+
+```
+    # lib/MyModule
+
+    class MyModule::Class {}
+
+    sub EXPORT($short_name?) {
+        {
+          do $short_name => MyModule::Class if $short_name
+        }
+    }
+
+    sub always is export(:MANDATORY) { say "works" }
+
+    #import with :ALL or :DEFAULT to get
+    sub shy is export { say "you found me!" }
+```
+
+```
+    # main.pl
+    use lib 'lib';
+    use MyModule 'foo';
+    say foo.new(); #MyModule::Class.new
+    always();      #OK   - is imported
+    shy();         #FAIL - won't be imported
+```     
